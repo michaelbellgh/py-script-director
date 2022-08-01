@@ -16,6 +16,10 @@ class OutputArgType(Enum):
 
 
 class InputOutputPlugin(ABC):
+    '''
+    A plugin which has defined input parameters, and defined output parameters. 
+    Each input type must be a InputArgType, and each output value a OutputArgType
+    '''
     def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: dict, output_args: dict, tags: list=[], tenant: str=None):
         self.name = name
         self.description = description
@@ -46,6 +50,10 @@ class InputOutputPlugin(ABC):
 
 
 class InfoPlugin(ABC):
+    '''
+    A simple, no input parameter plugin type.
+    Output args are strictly defined
+    '''
     def __init__(self, name: str, description: str, major_group: str, minor_group: str, output_args: dict, tags: list=[], tenant: str=None):
         self.name = name
         self.description = description

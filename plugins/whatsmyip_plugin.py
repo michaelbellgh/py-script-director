@@ -6,6 +6,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class WhatsMyIPPlugin(plugin_base.InfoPlugin):
+    '''
+    A simple demo plugin.
+    Returns {IP: <current public IP>}
+    '''
     def plugin_setup(self):
         logger.info("Loaded WhatsMyIPPlugin")
     def __init__(self):

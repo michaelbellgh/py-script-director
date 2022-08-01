@@ -6,6 +6,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class HelloWorldPlugin(plugin_base.InputOutputPlugin):
+    '''
+    A simple test plugin, returns {Example output: Hello World}
+    '''
     def plugin_setup(self):
         logger.info("Loaded HelloWorldPlugin")
     def __init__(self):
