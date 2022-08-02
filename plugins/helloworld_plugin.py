@@ -13,7 +13,7 @@ class HelloWorldPlugin(plugin_base.InputOutputPlugin):
         logger.info("Loaded HelloWorldPlugin")
     def __init__(self):
         super().__init__("HelloWorldPlugin", "A simple test", "Utilities", "Demos", {"Name": plugin_base.InputArgType.input_string}, {"Example output": plugin_base.OutputArgType.html})
-    def execute_plugin(self) -> dict:
-        return {"Example output:": "Hello World"}
+    def execute_plugin(self, input_dict) -> dict:
+        return {"Example output:": "Hello World, "  + input_dict["Name"]}
 
 

@@ -2,7 +2,7 @@
     <head></head>
     <body>
         {% for item in plugins %}
-        <p>{{ item }}</p>
+        <p><a href="/plugins/info?name={{ item }}">{{ item }}</a></p>
         {% endfor %}
     </body>
 </html>

@@ -51,13 +51,26 @@ def plugin_info():
             if name.lower() == request.args["name"].lower():
                 matched_plugin = plugin
         if matched_plugin is not None:
-            return render_template("plugin_info.html", item=matched_plugin)
+            return render_template("plugin_info.html", item=matched_plugin, plugin_html=render_input_form(matched_plugin))
         else:
             return Response("Cannot find plugin " + request.args["name"], status=404)
     else:
         return Response("Must specify ?name=PluginName", status=400)
     
 
+
+def render_input_form(plugin) -> str:
+    html = '<form action="/plugins/execute?plugin_name=' + plugin.name + '" method="post">\n'
+    if isinstance(plugin, plugin_base.InputOutputPlugin):
+        for k,v in plugin.valid_inputs.items():
+            html += '<label for="' + k.split(" ")[0] + '">' + k + '</label><br>\n'
+            if v == plugin_base.InputArgType.input_string:
+                html += '<input type="text" id="' + k.split(" ")[0] + '" name="' + k.split(" ")[0] + '"><br>\n'
+    
+    html += '<input type="submit" value="Submit">\n</form>'
+    return html
+            
+        
 
 def get_module_plugins(filepath: str):
     '''
@@ -80,17 +93,22 @@ def get_module_plugins(filepath: str):
 @plugin_manager_blueprint.route("/plugins/execute", methods=["POST", "GET"])
 def plugin_execute():
     '''
-    Call execute_plugin on each instance we have in loaded_plugins. Syntax: /plugins/execute?name=MyPluginHere
+    Call execute_plugin on each instance we have in loaded_plugins. Syntax: /plugins/execute?plugin_name=MyPluginHere
     Currently, only runs InfoPlugin (no parameters for input)
     '''
     if len(loaded_plugins) < 1:
         populate_plugins()
-    if "name" in request.args:
+    if "plugin_name" in request.args:
         matched_plugin = None
         for name, plugin in loaded_plugins.items():
-            if name.lower() == request.args["name"].lower():
+            if name.lower() == request.args["plugin_name"].lower():
                 matched_plugin = plugin
         if matched_plugin is not None:
-            response_dict = matched_plugin.execute_plugin()
             if isinstance(matched_plugin, plugin_base.InfoPlugin):
+                response_dict = matched_plugin.execute_plugin()
                 return render_template("plugin_infoplugin.html", response=response_dict)
+            if isinstance(matched_plugin, plugin_base.InputOutputPlugin):
+                data_dict = {}
+                data_dict.update(request.form)
+                response_dict = matched_plugin.execute_plugin(data_dict)
+                return render_template("plugin_inputoutput.html", response=response_dict)
