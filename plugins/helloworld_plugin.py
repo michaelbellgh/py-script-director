@@ -15,6 +15,6 @@ class HelloWorldPlugin(plugin_base.InputOutputPlugin):
         super().__init__("HelloWorldPlugin", "A simple test", "Utilities", "Demos",
             [plugin_base.InputArgParameter("Name", "Michael", plugin_base.InputArgType.input_string)], [plugin_base.OutputArgParameter("Output", "", plugin_base.OutputArgType.html)])
     def execute_plugin(self, input_dict) -> dict:
-        return {"Example output:": "Hello World, "  + input_dict["form_inputs"]["Name"]}
+        return [plugin_base.OutputArgObject("Output", plugin_base.OutputArgType.html, "Hello " + input_dict["form_inputs"]["Name"])]
 
 
