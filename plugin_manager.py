@@ -65,21 +65,22 @@ def render_input_form(plugin) -> str:
     html = '<form action="/plugins/execute?plugin_name=' + plugin.name + '" method="post" enctype=multipart/form-data>\n'
     if isinstance(plugin, plugin_base.InputOutputPlugin):
         for v in plugin.valid_inputs:
-            html += '<label for="' + normalise_ids(v.name) + '">' + v.name + '</label><br>\n'
+            html += f'<div class="mb-3"><label for="{normalise_ids(v.name)}">{v.name}</label><br>\n'
             if v.type == plugin_base.InputArgType.input_string:
-                html += '<input type="text" id="' + normalise_ids(v.name) + '" name="' + v.name + '"><br>\n'
+                html += '<input type="text" class="form-control" id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
             if v.type == plugin_base.InputArgType.input_number:
-                html += '<input type="number" min=0 id="' + normalise_ids(v.name) + '" name="' + v.name + '"><br>\n'
+                html += '<input type="number" class="form-control" min=0 id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
             if v.type == plugin_base.InputArgType.input_checkbox:
                 checked = " checked " if v.default == "checked" else ""
-                html += '<input type="checkbox"' + checked + 'id="' + normalise_ids(v.name) + '" name="' + v.name + '"><br>\n'
+                html += '<input type="checkbox" class="form-check-input" ' + checked + 'id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
             if v.type == plugin_base.InputArgType.input_filename:
-                html += '<input type="file" id="' + normalise_ids(v.name) + '" name="' + v.name + '"><br>\n'
+                html += '<input type="file" class="form-control" id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
             if v.type == plugin_base.InputArgType.input_textarea:
-                html += '<textarea cols="180" rows="50" id="' + normalise_ids(v.name) + '" name="' + v.name + '"></textarea><br>\n'
+                html += '<textarea cols="180" rows="50" id="' + normalise_ids(v.name) + '" name="' + v.name + '"></textarea>\n'
             
+            html += "</div>"
     
-    html += '<input type="submit" value="Submit">\n</form>'
+    html += '<input type="submit" class="btn btn-primary" value="Submit">\n</form>'
     return html
             
         

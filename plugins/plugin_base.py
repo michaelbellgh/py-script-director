@@ -36,13 +36,14 @@ class OutputArgObject():
         self.value = value
 
 class BasePlugin(ABC):
-    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: list, output_args: dict, tags: list=[], tenant: str=None):
+    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: list, output_args: dict, plugin_type: type, tags: list=[], tenant: str=None):
         self.name = name
         self.description = description
         self.major_group = major_group
         self.minor_group = minor_group
         self.tags = [x for x in tags if isinstance(x, str)]
         self.tenant = tenant if isinstance(tenant, str) else None
+        self.plugin_type = type(self)
 
 class InputOutputPlugin(BasePlugin, ABC):
     '''
