@@ -9,33 +9,56 @@ logger = logging.getLogger(__name__)
 class InputArgType(Enum):
     input_string = 1
     input_filename = 2
+    input_number = 3
+    input_checkbox = 4
+    input_textarea = 5
+
+class InputArgParameter():
+    def __init__(self, name: str, default, type: InputArgType) -> None:
+        self.name = name
+        self.default = default
+        self.type = type
+
+class OutputArgParameter():
+    def __init__(self, name: str, default, type: InputArgType) -> None:
+        self.name = name
+        self.default = default
+        self.type = type
 
 class OutputArgType(Enum):
     download_file = 1
     html = 2
 
+class OutputArgObject():
+    def __init__(self, name: str, type: OutputArgType, value, metaname: str=""):
+        self.name = name
+        self.type = type
+        self.value = value
+        self.metaname = metaname
+
 class BasePlugin(ABC):
-    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: dict, output_args: dict, tags: list=[], tenant: str=None):
+    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: list, output_args: dict, plugin_type: type, tags: list=[], tenant: str=None):
         self.name = name
         self.description = description
         self.major_group = major_group
         self.minor_group = minor_group
         self.tags = [x for x in tags if isinstance(x, str)]
         self.tenant = tenant if isinstance(tenant, str) else None
+        self.plugin_type = type(self)
 
 class InputOutputPlugin(BasePlugin, ABC):
     '''
     A plugin which has defined input parameters, and defined output parameters. 
     Each input type must be a InputArgType, and each output value a OutputArgType
     '''
-    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: dict, output_args: dict, tags: list=[], tenant: str=None):
+    def __init__(self, name: str, description: str, major_group: str, minor_group: str, input_args: list, output_args: dict, tags: list=[], tenant: str=None):
         self.name = name
         self.description = description
         self.major_group = major_group
         self.minor_group = minor_group
         
-        self.valid_inputs = {k:v for (k,v) in input_args.items() if v in InputArgType}
-        self.valid_outputs = {k:v for (k,v) in output_args.items() if v in OutputArgType}
+        self.valid_inputs = [x for x in input_args if isinstance(x, InputArgParameter)]
+        self.valid_outputs = [x for x in output_args if isinstance(x, OutputArgParameter)]
 
         if len(self.valid_inputs) < 1:
             logging.error("No valid input arguments: " + str(input_args)) 

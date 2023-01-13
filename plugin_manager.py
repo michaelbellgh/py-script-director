@@ -1,7 +1,7 @@
-from flask import render_template, Blueprint, request, Response
+from flask import Flask, render_template, Blueprint, request, Response
 from plugins import plugin_base
 import inspect, importlib, logging
-import glob, os
+import glob, os, multidict
 
 
 
@@ -56,18 +56,31 @@ def plugin_info():
             return Response("Cannot find plugin " + request.args["name"], status=404)
     else:
         return Response("Must specify ?name=PluginName", status=400)
-    
+
+def normalise_ids(input: str) -> str:
+    return input.replace(" ", "_") 
 
 
 def render_input_form(plugin) -> str:
-    html = '<form action="/plugins/execute?plugin_name=' + plugin.name + '" method="post">\n'
+    html = '<form action="/plugins/execute?plugin_name=' + plugin.name + '" method="post" enctype=multipart/form-data>\n'
     if isinstance(plugin, plugin_base.InputOutputPlugin):
-        for k,v in plugin.valid_inputs.items():
-            html += '<label for="' + k.split(" ")[0] + '">' + k + '</label><br>\n'
-            if v == plugin_base.InputArgType.input_string:
-                html += '<input type="text" id="' + k.split(" ")[0] + '" name="' + k.split(" ")[0] + '"><br>\n'
+        for v in plugin.valid_inputs:
+            html += f'<div class="mb-3"><label for="{normalise_ids(v.name)}">{v.name}</label><br>\n'
+            if v.type == plugin_base.InputArgType.input_string:
+                html += '<input type="text" class="form-control" id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
+            if v.type == plugin_base.InputArgType.input_number:
+                html += '<input type="number" class="form-control" min=0 id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
+            if v.type == plugin_base.InputArgType.input_checkbox:
+                checked = " checked " if v.default == "checked" else ""
+                html += '<input type="checkbox" class="form-check-input" ' + checked + 'id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
+            if v.type == plugin_base.InputArgType.input_filename:
+                html += '<input type="file" class="form-control" id="' + normalise_ids(v.name) + '" name="' + v.name + '">\n'
+            if v.type == plugin_base.InputArgType.input_textarea:
+                html += '<textarea cols="180" rows="50" id="' + normalise_ids(v.name) + '" name="' + v.name + '"></textarea>\n'
+            
+            html += "</div>"
     
-    html += '<input type="submit" value="Submit">\n</form>'
+    html += '<input type="submit" class="btn btn-primary" value="Submit">\n</form>'
     return html
             
         
@@ -90,6 +103,13 @@ def get_module_plugins(filepath: str):
     instances = {v[0]:v[1]() for v in supported_types}
     return instances
 
+def request_to_dict(plugin: plugin_base.InputOutputPlugin, request):
+    converted_dict = {"form_inputs" : multidict.MultiDict(), "files": list()}
+    converted_dict["form_inputs"].update(request.form)
+    converted_dict["files"] = (request.files)
+
+    return converted_dict
+
 @plugin_manager_blueprint.route("/plugins/execute", methods=["POST", "GET"])
 def plugin_execute():
     '''
@@ -108,7 +128,11 @@ def plugin_execute():
                 response_dict = matched_plugin.execute_plugin()
                 return render_template("plugin_infoplugin.html", response=response_dict)
             if isinstance(matched_plugin, plugin_base.InputOutputPlugin):
-                data_dict = {}
-                data_dict.update(request.form)
-                response_dict = matched_plugin.execute_plugin(data_dict)
-                return render_template("plugin_inputoutput.html", response=response_dict)
+                request_params = request_to_dict(matched_plugin, request)
+                response = matched_plugin.execute_plugin(request_params)
+                #If theres a a download_file in output, we grab the first one and return that
+                download_responses = [x for x in response if x.type == plugin_base.OutputArgType.download_file]
+                if len(download_responses) > 0:
+                    return Response(download_responses[0].value, mimetype="text/plain", headers={"Content-Disposition": "attachment;filename=fmg_proxy_output.txt"}, direct_passthrough=True)
+                else: 
+                    return render_template("plugin_inputoutput.html", response=response)
